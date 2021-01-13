@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2021-01-13 Wed 18:14 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>&lrm;</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Shi-Chao Xia" />
+<link rel="stylesheet" type="text/css" href="https://gongzhitaao.org/orgcss/org.css"/>
+<script type="text/javascript">
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
+<!--/*--><![CDATA[/*><!--*/
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
+</script>
+</head>
+<body>
+<div id="content">
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org8f17070">1. UDP</a></li>
+<li><a href="#org5874647">2. TCP</a></li>
+<li><a href="#orga53848b">3. SSL</a></li>
+<li><a href="#org44bc932">4. VPN</a>
+<ul>
+<li><a href="#org9dfb177">4.1. IPsec</a></li>
+<li><a href="#orgfc0f58e">4.2. OpenVPN</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="orgfa0b2a5" class="figure">
+<p><img src="./img/osi.png" alt="osi.png" style="width:100%; max-width:600px;" />
+</p>
+</div>
+
+<div id="outline-container-org8f17070" class="outline-2">
+<h2 id="org8f17070"><span class="section-number-2">1</span> UDP</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+应用进程往一个UDP套接字写入一个消息，该消息随后被封装到一个UDP数据报，该UDP数据报进而又被封装到一个IP数据报，然后发送到目的地。
+如果一个数据报到达了其最终目的地，但是校验和检测发现有错误，或者该数据报在网络传输途中被丢弃了，它就无法被投递给UDP套接字，也不会被源自动重传。
+每个UDP数据报都有一个长度。如果一个数据报正确地到达其目的地，那么该数据报的长度将随数据一道传递给接收端应用程序。TCP是一个字节流协议，没有任何记录边界，这一点不同于UDP。
+</p>
+
+
+<div id="org5394548" class="figure">
+<p><img src="./img/udp.png" alt="udp.png" style="width:100%; max-width:600px;" />
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5874647" class="outline-2">
+<h2 id="org5874647"><span class="section-number-2">2</span> TCP</h2>
+<div class="outline-text-2" id="text-2">
+
+<div id="org1bd268f" class="figure">
+<p><img src="./img/tcp.png" alt="tcp.png" style="width:100%; max-width:600px;" />
+</p>
+</div>
+
+<p>
+TCP提供可靠性，当TCP向另一端发送数据时，它要求对端返回一个确认。如果没有收到确认，TCP就自动重传数据并等待更长时间。在数次重传失败后，TCP才放弃。
+</p>
+
+<p>
+TCP含有动态估算客户和服务器之间的往返时间（round-trip time，RTT）的算法，而且持续估算一个给定连接的RTT。
+</p>
+
+<p>
+TCP通过给其中每个字接关联一个序列号对所发送的数据进行排序。如果这些分节非顺序到达，接收端TCP将先根据它们的序列号重新排序，再把结果数据传递给接收应用。
+</p>
+
+<blockquote>
+<p>
+UDP不提供可靠性。UDP本身不提供确认、序列号、RTT估算、超时和重传等机制。UDP数据报可能丢失或颠倒顺序，UDP应用需要处理这些情况。
+</p>
+</blockquote>
+
+<p>
+TCP提供流量控制。TCP总是告知对端在任何时刻它一次能够从对端接收多少字节的数据（通告窗口）。在任何时候，该窗口指出接收缓冲区中当前可用的空间量，从而确保发送端发送的数据不会是接收缓冲区溢出。该窗口时刻动态变化：当接收到来自发送端的数据时，窗口大小就减小，但是当接收端应用从缓冲区中读取数据时，窗口大小就增大。当TCP对应某个套接字的接收缓冲区已满，导致它必须等待应用从该缓冲区读取数据时，方能从对端再接收数据。
+</p>
+
+<blockquote>
+<p>
+UDP不提供流量控制。
+</p>
+</blockquote>
+
+<div class="org-src-container">
+<pre class="src src-javascript"><span style="color: #2aa1ae; background-color: #ecf3ec;">/// </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Client</span>
+<span style="color: #3a81c3; font-weight: bold;">const</span> <span style="color: #715ab1;">net</span> = require(<span style="color: #2d9574;">'net'</span>);
+
+<span style="color: #3a81c3; font-weight: bold;">const</span> <span style="color: #715ab1;">client</span> = net.createConnection(3000, <span style="color: #2d9574;">'127.0.0.1'</span>);
+client.on(<span style="color: #2d9574;">'connect'</span>, <span style="color: #3a81c3; font-weight: bold;">function</span>(){
+    console.log(<span style="color: #2d9574;">'Connection Established'</span>);
+});
+client.on(<span style="color: #2d9574;">'data'</span>, <span style="color: #3a81c3; font-weight: bold;">function</span>(<span style="color: #715ab1;">data</span>){
+    console.log(<span style="color: #2d9574;">'Received: '</span>+ data);
+});
+client.on(<span style="color: #2d9574;">'close'</span>, <span style="color: #3a81c3; font-weight: bold;">function</span>(<span style="color: #715ab1;">data</span>){
+    console.log(<span style="color: #2d9574;">'Connection disconnected'</span>);
+});
+client.end(<span style="color: #2d9574;">'I\'m gone!'</span>);
+
+<span style="color: #2aa1ae; background-color: #ecf3ec;">/// </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Server</span>
+<span style="color: #3a81c3; font-weight: bold;">const</span> <span style="color: #715ab1;">net</span> = require(<span style="color: #2d9574;">'net'</span>);
+
+<span style="color: #3a81c3; font-weight: bold;">const</span> <span style="color: #715ab1;">server</span> = net.createServer(<span style="color: #3a81c3; font-weight: bold;">function</span>(<span style="color: #715ab1;">socket</span>){
+    console.log(<span style="color: #2d9574;">'Received request'</span>);
+    socket.on(<span style="color: #2d9574;">'data'</span>, <span style="color: #3a81c3; font-weight: bold;">function</span>(<span style="color: #715ab1;">data</span>){
+        console.log(<span style="color: #2d9574;">'Received data: '</span>+ data);
+        socket.write(<span style="color: #2d9574;">'Hello, I\'m server!'</span>);
+    });
+    socket.on(<span style="color: #2d9574;">'close'</span>, <span style="color: #3a81c3; font-weight: bold;">function</span>(){
+        console.log(<span style="color: #2d9574;">'Client disconnected'</span>);
+    });
+});
+server.listen(3000, <span style="color: #2d9574;">'127.0.0.1'</span>, <span style="color: #3a81c3; font-weight: bold;">function</span>(){
+    console.log(<span style="color: #2d9574;">'Begin listening'</span>);
+});
+
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga53848b" class="outline-2">
+<h2 id="orga53848b"><span class="section-number-2">3</span> SSL</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+A与B的通信过程，（1）A生成主密钥（master secret，MS）；（2）A通过证书中B的公钥加密MS发送给B，B用私钥解密得到MS；（3）A、B用MS生成用于后续通信的数据加密和验证数据完整性的对称密钥。
+</p>
+
+
+<div id="orgfb78f6d" class="figure">
+<p><img src="./img/ssl.png" alt="ssl.png" style="width:100%; max-width:600px;" />
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org44bc932" class="outline-2">
+<h2 id="org44bc932"><span class="section-number-2">4</span> VPN</h2>
+<div class="outline-text-2" id="text-4">
+</div>
+<div id="outline-container-org9dfb177" class="outline-3">
+<h3 id="org9dfb177"><span class="section-number-3">4.1</span> IPsec</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+在从源实体向目的实体发送IPsec数据报之前，源和目的实体创建了一个网络层的逻辑连接（Security Association，SA）。路由器R1维护有关SA的状态信息（加密完整性检查等）。无论何时路由器R1需要构建一个IPsec数据报经过这个SA转发，它访问该状态信息已决定它应当如何鉴别和加密该数据报。类似地，路由器R2将维护对此SA的相同的状态信息，并将使用该信息鉴别和加密任何从该SA到达的IPsec数据报。
+</p>
+
+
+<div id="org3b94a1a" class="figure">
+<p><img src="./img/ipsec.png" alt="ipsec.png" style="width:100%; max-width:600px;" />
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgfc0f58e" class="outline-3">
+<h3 id="orgfc0f58e"><span class="section-number-3">4.2</span> OpenVPN</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+在OpenVPN中，如果用户访问一个远程的虚拟地址（属于虚拟网卡配用的地址系列，区别于真实地址），则操作系统会通过路由机制将数据包（TUN模式）或数据帧（TAP模式）发送到虚拟网卡上，服务程序接收该数据并进行相应的处理后，通过Socket从外网上发送出去，远程服务程序通过Socket从外网上接收数据，并进行相应的处理后，发送给虚拟网卡，则应用软件可以接收到，完成了一个单向传输的过程，反之亦然。
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Shi-Chao Xia</p>
+<p class="date">Created: 2021-01-13 Wed 18:14</p>
+</div>
+</body>
+</html>

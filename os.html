@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2021-01-13 Wed 19:02 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>&lrm;</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Shi-Chao Xia" />
+<link rel="stylesheet" type="text/css" href="https://gongzhitaao.org/orgcss/org.css"/>
+<script type="text/javascript">
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
+<!--/*--><![CDATA[/*><!--*/
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
+</script>
+</head>
+<body>
+<div id="content">
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org32aebba">1. 内核</a></li>
+<li><a href="#org53c0872">2. 保护模式</a></li>
+<li><a href="#orgabc3a31">3. 进程调度</a></li>
+<li><a href="#orge7b7330">4. 进程间通信</a></li>
+<li><a href="#org9e243f9">5. 数据库</a></li>
+</ul>
+</div>
+</div>
+<p>
+从按下按下电脑开机键到浏览器输入网址打开网页这个过程中到底发生了什么。React在这个过程中做了什么。
+</p>
+
+<div id="outline-container-org32aebba" class="outline-2">
+<h2 id="org32aebba"><span class="section-number-2">1</span> 内核</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+当计算机电源被打开时，它会先进行加电自检，然后寻找启动盘，并检查启动盘的0面0磁道1扇区。如果该扇区是引导扇区，那么BIOS会将引导区的512个字节的内容装载到内存中，然后跳转到引导代码的地址，将控制权交给引导代码。
+</p>
+
+<p>
+引导扇区boot 加载loader进内存并跳转，
+Loader：加载内核到内存
+跳入保护模式
+</p>
+
+<p>
+之后跳转内核
+</p>
+
+<p>
+如何与硬件通信：通过处理中断和寄存器
+</p>
+</div>
+</div>
+
+<div id="outline-container-org53c0872" class="outline-2">
+<h2 id="org53c0872"><span class="section-number-2">2</span> 保护模式</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+在保护模式中，段寄存器指向GDT（Global Descriptor Table），从而提供了段式存储机制。
+</p>
+
+<p>
+GDT描述符包含DPL（Descriptor Privilege Level）属性。
+</p>
+
+<p>
+程序从一个代码段转移到另一个代码段之前，目标代码段的选择子会被加载到cs中。作为加载过程的一部分，处理器将会检查描述符的界限、类型、特权级等内容。如果检验成功，cs将被加载，程序控制将转移到新的代码段中，从eip指示的位置开始执行。
+</p>
+
+<p>
+逻辑地址&#x2013;[分段机制]-&gt;线性地址&#x2013;[分页机制]-&gt;物理地址
+</p>
+
+<p>
+线性地址通过页目录表映射到物理地址。
+</p>
+
+<p>
+键盘输入-&gt;键盘编码器-&gt;键盘控制器-&gt;中断控制器
+</p>
+
+<p>
+通过VGA寄存器中的值来控制内存中内容的现实。
+</p>
+
+<p>
+当某个进程调用 <code>printf()</code> 时，为每个进程指定一个与之相对应的TTY。
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgabc3a31" class="outline-2">
+<h2 id="orgabc3a31"><span class="section-number-2">3</span> 进程调度</h2>
+</div>
+
+<div id="outline-container-orge7b7330" class="outline-2">
+<h2 id="orge7b7330"><span class="section-number-2">4</span> 进程间通信</h2>
+</div>
+
+<div id="outline-container-org9e243f9" class="outline-2">
+<h2 id="org9e243f9"><span class="section-number-2">5</span> 数据库</h2>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Shi-Chao Xia</p>
+<p class="date">Created: 2021-01-13 Wed 19:02</p>
+</div>
+</body>
+</html>
